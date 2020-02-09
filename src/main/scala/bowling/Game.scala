@@ -10,6 +10,14 @@ case class Frame(roll1: Option[Roll], roll2: Option[Roll])
 case class TenthFrame(extraRolls: Seq[Roll])
 case class GameState(frames: Seq[Frame])
 
+object Frame {
+    def first(pins: Int) = Frame(Some(Roll(pins)), Option.empty)
+}
+object GameState {
+    val empty = GameState(Seq())
+}
+
+
 object DataImplicits {
     implicit class RollImpl(roll: Option[Roll]) {
         def is10() = roll.filter(_.pins == 10).isDefined
@@ -32,12 +40,6 @@ object DataImplicits {
     }
 }
 
-object Frame {
-    def first(pins: Int) = Frame(Some(Roll(pins)), Option.empty)
-}
-object GameState {
-    val empty = GameState(Seq())
-}
 
 trait Game {
     import DataImplicits._
@@ -64,20 +66,20 @@ trait Game {
 
     def score(state: GameState): Int = {
 
-        def aheadSum(head: Frame, tail: Seq[Frame]): Int = {
+        def aheadSum(head: Frame, next: Option[Frame]): Int = {
             if(head.isStrike()) {
                 head.sum() +
-                    tail.headOption.map(f => f.roll1.sum()).getOrElse(0) +
-                    tail.headOption.map(f => f.roll2.sum()).getOrElse(0)
+                    next.map(f => f.roll1.sum()).getOrElse(0) +
+                    next.map(f => f.roll2.sum()).getOrElse(0)
 
             } else if(head.isSpare()) {
-                head.sum() + tail.headOption.map(f => f.roll1.sum()).getOrElse(0)
+                head.sum() + next.map(f => f.roll1.sum()).getOrElse(0)
             } else head.sum()
         }
         def score(ahead: Seq[Frame]): Int = {
             ahead match {
                 case head :: tail =>  {
-                    aheadSum(head, tail) + score(tail)
+                    aheadSum(head, tail.headOption) + score(tail)
                 }
                 case Nil => 0
             }
