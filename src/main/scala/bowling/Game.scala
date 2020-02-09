@@ -19,7 +19,7 @@ object DataImplicits {
         def isStrike() = frame.roll1.is10()
         def isSpare() = ( frame.roll1.sum() + frame.roll2.sum() ) == 10
         def sum() = {
-            if( isSpare() ) 0
+            if( isSpare() ) 10
             else frame.roll1.sum() + frame.roll2.sum()
         }
         def isFinished(): Boolean = {
@@ -66,16 +66,19 @@ trait Game {
 
         def aheadSum(head: Frame, tail: Seq[Frame]): Int = {
             if(head.isStrike()) {
-                tail.headOption.map(next => aheadSum(next, tail.tail)).getOrElse(0) +
-                    tail.tail.headOption.map(next => aheadSum(next, tail.tail.tail)).getOrElse(0)
+                head.sum() +
+                    tail.headOption.map(f => f.roll1.sum()).getOrElse(0) +
+                    tail.headOption.map(f => f.roll2.sum()).getOrElse(0)
+
             } else if(head.isSpare()) {
-                tail.headOption.map(aheadSum(_, tail.tail)).getOrElse(0) 
+                head.sum() + tail.headOption.map(f => f.roll1.sum()).getOrElse(0)
             } else head.sum()
         }
         def score(ahead: Seq[Frame]): Int = {
             ahead match {
-                case head :: tail => 
+                case head :: tail =>  {
                     aheadSum(head, tail) + score(tail)
+                }
                 case Nil => 0
             }
         }
